@@ -1,52 +1,19 @@
 """PAYMENT.py - 카페 키오스크 결제 로직 (초안)
 
-주문(order) 형식 예시 (ORDER.py 담당과 맞출 부분):
+주문(order) 형식 예시:
     order = [
         {"name": "아메리카노", "temp": "ICE", "qty": 2},
         {"name": "라떼", "temp": "HOT", "qty": 1},
     ]
 """
-
-# ---------------------------------------------------------------
-# 메뉴판 (나중에는 MENU.py에서 import 해서 사용: from MENU import MENU)
-# ---------------------------------------------------------------
-MENU = {
-    # 커피
-    "핸드드립": {"id": 1, "category": "커피", "price": 5000},
-    "에스프레소": {"id": 2, "category": "커피", "price": 3500},
-    "아메리카노": {"id": 3, "category": "커피", "price": 4000},
-    "라떼": {"id": 4, "category": "커피", "price": 4500},
-    "콜드브루": {"id": 5, "category": "커피", "price": 4800},
-    # 논커피
-    "초코라떼": {"id": 6, "category": "논커피", "price": 4800},
-    "딸기라떼": {"id": 7, "category": "논커피", "price": 5000},
-    # 차
-    "유자차": {"id": 8, "category": "차", "price": 4500},
-    "대추차": {"id": 9, "category": "차", "price": 5000},
-    "율무차": {"id": 10, "category": "차", "price": 4000},
-    "쌍화차": {"id": 11, "category": "차", "price": 5000},
-    "페퍼민트티": {"id": 12, "category": "차", "price": 4000},
-}
-
-ICE_EXTRA = 500            # 아이스 추가금
-ICE_ONLY = {"콜드브루"}     # 항상 아이스인 메뉴 (추가금 없음)
-
+from menu import get_price
 
 # ---------------------------------------------------------------
 # 가격 계산
 # ---------------------------------------------------------------
 def get_unit_price(name, temp="HOT"):
-    """메뉴 1잔의 가격. 아이스는 +500원 (ICE_ONLY 메뉴는 추가금 없음)."""
-    if name not in MENU:
-        raise ValueError(f"메뉴에 없는 상품입니다: {name}")
-    temp = temp.upper()
-    if temp not in ("HOT", "ICE"):
-        raise ValueError(f"온도는 HOT 또는 ICE만 가능합니다: {temp}")
-
-    price = MENU[name]["price"]
-    if temp == "ICE" and name not in ICE_ONLY:
-        price += ICE_EXTRA
-    return price
+    """메뉴 1잔의 가격. (menu.py 기준) ."""
+    return get_price(name, temp)
 
 
 def calculate_line_total(item):
