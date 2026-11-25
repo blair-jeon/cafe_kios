@@ -1,7 +1,7 @@
 """
 카페 키오스크 - main.py (조립 담당)
 
-흐름: 메뉴판 출력 → 메뉴/온도/수량 선택 반복 → 주문 확인 → 결제(카드/현금) → 다음 손님
+흐름: 메뉴판 출력 → 메뉴/온도(1.HOT 2.ICE)/수량 선택 → [1.더 담기 / 2.결제하기] → 결제(카드/현금) → 다음 손님
 
 사용하는 팀원 모듈
     menu.py    : print_menu(), get_menu_by_id(), is_valid_temperature(), normalize_temperature()
@@ -27,12 +27,11 @@ def ask_number(prompt, min_value, max_value):
 
 
 def ask_temperature(name):
-    """HOT/ICE를 입력받는다. (h, i, 아이스 같은 입력도 menu.py가 처리)"""
-    while True:
-        text = input(f"{name} 온도를 선택하세요 (HOT/ICE): ")
-        if menu.is_valid_temperature(text):
-            return menu.normalize_temperature(text)
-        print("HOT 또는 ICE를 입력해주세요.")
+    """온도를 숫자로 입력받는다. 1 → HOT, 2 → ICE"""
+    print(f"\n{name} 온도를 선택하세요.")
+    print("1. HOT  2. ICE")
+    choice = ask_number("번호 입력: ", 1, 2)
+    return menu.HOT if choice == 1 else menu.ICE
 
 
 def ask_yes_no(prompt):
@@ -50,9 +49,14 @@ def take_order():
     while True:
         print()
         menu.print_menu()
-        print("\n 0. 주문 완료")
 
-        menu_id = ask_number("메뉴 번호를 선택하세요: ", 0, max_id)
+        # 장바구니가 비었을 때와 아닐 때 0번의 의미를 다르게 보여준다
+        if current.is_empty():
+            prompt = "\n주문할 메뉴 번호를 입력하세요 (0: 주문 취소): "
+        else:
+            prompt = "\n추가할 메뉴 번호를 입력하세요 (0: 추가 없이 결제하기): "
+
+        menu_id = ask_number(prompt, 0, max_id)
         if menu_id == 0:
             return current
 
@@ -61,8 +65,14 @@ def take_order():
         quantity = ask_number(f"{name} 수량을 입력하세요: ", 1, 99)
 
         item = current.add_item(name, temperature, quantity)
-        print(f"→ {name} [{temperature}] {quantity}잔 담았습니다. "
+        print(f"\n→ {name} [{temperature}] {quantity}잔 담았습니다. "
               f"({item['total_price']:,}원)")
+        print(f"   현재 합계: {current.total:,}원")
+
+        # 담은 직후, 다음 행동을 명확하게 묻는다
+        print("\n1. 메뉴 더 담기  2. 주문 끝내고 결제하기")
+        if ask_number("번호 입력: ", 1, 2) == 2:
+            return current
 
 
 def to_payment_format(current):
@@ -121,7 +131,7 @@ def main():
             print()
             print(current.summary())
 
-            if ask_yes_no("\n이대로 결제하시겠습니까? (y/n): ") and checkout(current):
+            if checkout(current):
                 current.status = "준비 중"
                 print(f"\n결제가 완료되었습니다. 주문 번호는 {current.order_number}번입니다.")
             else:
